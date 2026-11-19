@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Artist Tracker — Performance & Financial Manager</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- Popup Modal for Show Day Alerts & Post-Show Financial Logging -->
+    <div id="day-popup-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title">Show Details</h2>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <div id="modal-body" class="modal-body"></div>
+            <div class="modal-footer" id="modal-footer">
+                <button class="btn-secondary" onclick="closeModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-shell">
+        <!-- Top Navigation Bar with Custom Treble-Clef + Profit Chart Logo -->
+        <header class="navbar">
+            <div class="brand">
+                <div class="brand-logo" aria-hidden="true">
+                    <svg width="36" height="36" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <linearGradient id="logoGrad" x1="4" y1="36" x2="36" y2="4" gradientUnits="userSpaceOnUse">
+                                <stop offset="0%" stop-color="#00E5FF"/>
+                                <stop offset="100%" stop-color="#10B981"/>
+                            </linearGradient>
+                        </defs>
+                        <rect x="1" y="1" width="38" height="38" rx="10" fill="#0B132B" stroke="url(#logoGrad)" stroke-width="1.5"/>
+                        <!-- Stylized Treble Clef Curve -->
+                        <path d="M17.5 31C14.8 31 13 29.2 13 26.8C13 24.3 15.1 22.5 17.8 22.5C19.5 22.5 21 23.4 21.6 24.8M17.5 31V11.5C17.5 8.8 19.6 7 21.5 7C23.2 7 24.3 8.4 24.3 10.2C24.3 13.5 19.8 16.5 15.8 19.5C13.4 21.3 12 23.6 12 26.4C12 29.6 14.5 32 17.6 32C19.5 32 21 31 21.6 29.5" stroke="#00E5FF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <!-- Rising Profit Line Arrow -->
+                        <path d="M18.5 21.5L23.5 17.5L26.5 19.8L32.5 13.5" stroke="#10B981" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M28.5 13.2H32.8V17.5" stroke="#10B981" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <div>
+                    <h1>Artist Tracker</h1>
+                    <span>Performance &amp; Financial Studio</span>
+                </div>
+            </div>
+
+            <nav class="tab-nav" role="tablist">
+                <button type="button" class="tab-btn active" data-tab="tab-overview" onclick="switchTab('tab-overview')">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    Schedule &amp; Entry
+                </button>
+                <button type="button" class="tab-btn" data-tab="tab-analytics" onclick="switchTab('tab-analytics')">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                    Financial Analytics
+                </button>
+                <button type="button" class="tab-btn" data-tab="tab-ledger" onclick="switchTab('tab-ledger')">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                    Records Ledger
+                </button>
+            </nav>
+
+            <div class="nav-metrics">
+                <div class="metric-chip">
+                    <span class="chip-label">Net Profit</span>
+                    <strong id="nav-profit" class="text-emerald">₹0.00</strong>
+                </div>
+                <div class="metric-chip">
+                    <span class="chip-label">Margin</span>
+                    <strong id="nav-margin" class="text-cyan">0.0%</strong>
+                </div>
+            </div>
+        </header>
+
+        <!-- TAB 1: SCHEDULE & ENTRY (Zero-Scroll Two-Column Workspace) -->
+        <section id="tab-overview" class="tab-panel active">
+            <div class="overview-grid">
+                <!-- Left Column: Compact KPI Strip + Smart Entry Form -->
+                <div class="left-pane">
+                    <div class="kpi-strip">
+                        <div class="kpi-mini">
+                            <span>Completed</span>
+                            <h3 id="kpi-shows">0</h3>
+                        </div>
+                        <div class="kpi-mini">
+                            <span>Upcoming</span>
+                            <h3 id="kpi-upcoming" class="text-amber">0</h3>
+                        </div>
+                        <div class="kpi-mini">
+                            <span>Total Earned</span>
+                            <h3 id="kpi-earnings" class="text-cyan">₹0.00</h3>
+                        </div>
+                        <div class="kpi-mini">
+                            <span>Net Profit</span>
+                            <h3 id="kpi-profit" class="text-emerald">₹0.00</h3>
+                        </div>
+                    </div>
+
+                    <div class="panel-card form-card">
+                        <div class="card-head">
+                            <h2 id="form-title">Schedule or Log Show</h2>
+                            <span id="booking-badge" class="badge badge-future">Upcoming Booking</span>
+                        </div>
+                        <form id="performance-form">
+                            <input type="hidden" id="record-id">
+                            <div class="form-grid-2">
+                                <div class="form-group">
+                                    <label for="title">Show / Event Name</label>
+                                    <input type="text" id="title" placeholder="e.g., Live Performance" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="location">Location / Venue</label>
+                                    <input type="text" id="location" placeholder="e.g., Bangalore" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="date">Performance Date</label>
+                                    <input type="date" id="date" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Show Time (12-Hour)</label>
+                                    <div class="time-row">
+                                        <select id="time-hour">
+                                            <option value="01">01</option><option value="02">02</option>
+                                            <option value="03">03</option><option value="04">04</option>
+                                            <option value="05" selected>05</option><option value="06">06</option>
+                                            <option value="07">07</option><option value="08">08</option>
+                                            <option value="09">09</option><option value="10">10</option>
+                                            <option value="11">11</option><option value="12">12</option>
+                                        </select>
+                                        <select id="time-minute">
+                                            <option value="00" selected>00</option><option value="15">15</option>
+                                            <option value="30">30</option><option value="45">45</option>
+                                        </select>
+                                        <select id="time-ampm">
+                                            <option value="AM">AM</option>
+                                            <option value="PM" selected>PM</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Shown ONLY when selected Date & Time is in the PAST -->
+                                <div class="form-group money-field hidden" id="group-earnings">
+                                    <label for="earnings">Money Earned (₹)</label>
+                                    <input type="number" id="earnings" step="0.01" min="0" placeholder="0.00">
+                                </div>
+                                <div class="form-group money-field hidden" id="group-expenses">
+                                    <label for="expenses">Expenses (₹)</label>
+                                    <input type="number" id="expenses" step="0.01" min="0" value="0">
+                                </div>
+                                <div class="form-group money-field hidden span-2" id="group-profit">
+                                    <label>Calculated Net Profit (₹)</label>
+                                    <input type="text" id="live-profit" value="₹0.00" disabled>
+                                </div>
+                            </div>
+
+                            <p id="future-note" class="info-banner hidden">
+                                Upcoming booking: earnings and expenses stay hidden until the show concludes, when a popup will prompt you to enter them.
+                            </p>
+
+                            <div class="form-actions">
+                                <button type="submit" id="submit-btn" class="btn-primary">Save Booking</button>
+                                <button type="button" id="cancel-btn" class="btn-secondary hidden">Cancel Edit</button>
+                            </div>
+                            <p id="error-msg" class="error"></p>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Right Column: Compact Calendar Widget -->
+                <div class="right-pane">
+                    <div class="panel-card cal-card">
+                        <div class="cal-header">
+                            <h2>Schedule Calendar</h2>
+                            <div class="cal-controls">
+                                <button type="button" class="btn-icon" onclick="changeMonth(-1)">&lsaquo;</button>
+                                <span id="cal-month-year" class="cal-title">Month Year</span>
+                                <button type="button" class="btn-icon" onclick="changeMonth(1)">&rsaquo;</button>
+                            </div>
+                        </div>
+                        <div class="cal-legend">
+                            <span><i class="dot dot-past"></i> Completed</span>
+                            <span><i class="dot dot-future"></i> Upcoming</span>
+                            <span><i class="dot dot-today"></i> Today</span>
+                        </div>
+                        <div class="cal-weekdays">
+                            <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
+                        </div>
+                        <div id="calendar-grid" class="cal-grid"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: DEDICATED FINANCIAL ANALYTICS (2x2 Viewport Grid) -->
+        <section id="tab-analytics" class="tab-panel">
+            <div class="analytics-summary-bar">
+                <div class="stat-pill"><span>Avg Profit / Show:</span> <strong id="stat-avg-profit" class="text-emerald">₹0.00</strong></div>
+                <div class="stat-pill"><span>Total Expenses:</span> <strong id="stat-total-exp" class="text-rose">₹0.00</strong></div>
+                <div class="stat-pill"><span>Expense Ratio:</span> <strong id="stat-exp-ratio" class="text-amber">0.0%</strong></div>
+                <div class="stat-pill"><span>Profit Margin:</span> <strong id="stat-margin" class="text-cyan">0.0%</strong></div>
+            </div>
+
+            <div class="charts-grid-2x2">
+                <div class="panel-card chart-card">
+                    <h3>1. Monthly Financials (Earnings vs. Expenses)</h3>
+                    <div class="canvas-wrap"><canvas id="monthlyBarChart"></canvas></div>
+                </div>
+                <div class="panel-card chart-card">
+                    <h3>2. Profit vs. Expense Breakdown</h3>
+                    <div class="canvas-wrap"><canvas id="profitPieChart"></canvas></div>
+                </div>
+                <div class="panel-card chart-card">
+                    <h3>3. Monthly Show-Count Scatter</h3>
+                    <div class="canvas-wrap"><canvas id="showScatterChart"></canvas></div>
+                </div>
+                <div class="panel-card chart-card">
+                    <h3>4. Profit Trend Over Time</h3>
+                    <div class="canvas-wrap"><canvas id="profitLineChart"></canvas></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: RECORDS LEDGER (CSV Table + Instant Search) -->
+        <section id="tab-ledger" class="tab-panel">
+            <div class="panel-card ledger-card">
+                <div class="card-head">
+                    <h2>Performance &amp; Financial Records (performances.csv)</h2>
+                    <input type="text" id="search-input" class="search-box" placeholder="Search show or venue...">
+                </div>
+                <div class="table-scroll">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Status</th>
+                                <th>Show Name</th>
+                                <th>Date &amp; Time</th>
+                                <th>Location</th>
+                                <th>Earned</th>
+                                <th>Expenses</th>
+                                <th>Net Profit</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="records-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
